@@ -23,7 +23,6 @@ class TdocsClient:
         )
         r.raise_for_status()
         data = r.json()
-        # 腾讯文档 API 报错时 HTTP 200 + code 字段
         if "code" in data and data["code"] != 0:
             raise RuntimeError(f"API error: {data.get('message', data)}")
         return data
@@ -31,25 +30,19 @@ class TdocsClient:
     # ---- 读 ----
 
     def get_file_meta(self, file_id: str) -> list[dict]:
-        """获取表格所有 sheet 的元数据."""
         data = self._request("GET", f"/spreadsheet/v3/files/{file_id}")
         return data.get("properties", [])
 
     def read_range(self, file_id: str, sheet_id: str, range_: str) -> list[list[str]]:
         """
         读取指定范围，返回二维文本数组。
-        range_ 示例: "A1:X300"
+        支持 text / select / number / time 四种单元格类型。
         """
         data = self._request("GET", f"/spreadsheet/v3/files/{file_id}/{sheet_id}/{range_}")
         rows = data.get("gridData", {}).get("rows", [])
         result = []
         for row in rows:
-            cells = []
-            for v in row.get("values", []):
-                if v and v.get("cellValue"):
-                    cells.append(v["cellValue"].get("text", ""))
-                else:
-                    cells.append("")
+            cells = [_extract_cell_text(v) for v in row.get("values", [])]
             result.append(cells)
         return result
 
@@ -59,19 +52,13 @@ class TdocsClient:
         self,
         file_id: str,
         sheet_id: str,
-        start_row: int,      # 0-based
-        start_col: int,       # 0-based
+        start_row: int,
+        start_col: int,
         rows: list[list[str]],
     ) -> int:
-        """
-        将 rows（二维文本数组）写入指定位置。
-        返回更新的单元格数量。
-        """
         grid_rows = []
         for row_data in rows:
-            values = []
-            for text in row_data:
-                values.append({"cellValue": {"text": text}})
+            values = [{"cellValue": {"text": text}} for text in row_data]
             grid_rows.append({"values": values})
 
         body = {
@@ -96,3 +83,30 @@ class TdocsClient:
         )
         resp = data.get("responses", [{}])[0]
         return resp.get("updateRangeResponse", {}).get("updatedCells", 0)
+
+
+# ---- 单元格值提取（text / select / number / time）----
+
+def _extract_cell_text(v) -> str:
+    """从 API 返回的单元格对象中提取可读文本。"""
+    if not v or not v.get("cellValue"):
+        return ""
+    cv = v["cellValue"]
+
+    if "text" in cv:
+        return cv["text"] or ""
+
+    if "select" in cv:
+        sel = cv["select"]
+        selected = set(sel.get("value", []))
+        texts = [o["text"] for o in sel.get("options", []) if o["id"] in selected]
+        return ", ".join(texts)
+
+    if "number" in cv:
+        return str(cv["number"])
+
+    if "time" in cv:
+        t = cv["time"]
+        return f"{t.get('year','')}-{t.get('month',''):0>2d}-{t.get('day',''):0>2d}"
+
+    return ""
