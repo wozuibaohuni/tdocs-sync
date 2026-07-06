@@ -1,0 +1,9 @@
+{
+  "framework": null,
+  "crons": [
+    {
+      "path": "/api/sync",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

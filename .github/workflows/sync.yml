@@ -1,0 +1,24 @@
+name: 同步物料跟踪
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install httpx
+      - run: python run_sync.py
+        env:
+          TDOCS_ACCESS_TOKEN: ${{ secrets.TDOCS_ACCESS_TOKEN }}
+          TDOCS_CLIENT_ID:    ${{ secrets.TDOCS_CLIENT_ID }}
+          TDOCS_OPEN_ID:      ${{ secrets.TDOCS_OPEN_ID }}
+          TDOCS_FILE_ID:      ${{ secrets.TDOCS_FILE_ID }}
+          TDOCS_MASTER_SHEET_ID: BB08J2
+          TDOCS_TARGET_SHEET_ID: n3gv12
