@@ -2,7 +2,7 @@ name: 同步物料跟踪
 
 on:
   schedule:
-    - cron: "* * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:

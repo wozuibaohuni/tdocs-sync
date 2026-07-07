@@ -69,7 +69,7 @@ def main():
         pick    = row[PICK_COL].strip()    if len(row) > PICK_COL else ""
 
         new_data = [
-            order if order else f"(无工单-{master_idx+3})",  # A 维修工单
+            order if order else "无工单",                        # A 维修工单
             tracker,                                          # B 跟踪人
             pick,                                             # C 维修备件及数量 ← 领料内容
             "",                                                # D 备件序列号
