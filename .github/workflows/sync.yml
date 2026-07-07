@@ -1,8 +1,8 @@
 name: 同步物料跟踪
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"
+  # schedule:
+  #   - cron: "*/10 * * * *"   # 暂时停用，待方案确认后恢复
   workflow_dispatch:
 
 jobs:
