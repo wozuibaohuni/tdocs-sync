@@ -18,6 +18,7 @@ class TdocsClient:
 
     def _request(self, method: str, path: str, **kwargs) -> dict:
         url = f"{API_BASE}{path}"
+        kwargs.setdefault("timeout", 60)  # 腾讯文档 API 偶有延迟，默认 60s
         r = httpx.request(
             method, url, headers={**self._headers, **kwargs.pop("headers", {})}, **kwargs
         )
